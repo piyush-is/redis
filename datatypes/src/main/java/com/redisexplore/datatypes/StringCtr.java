@@ -10,6 +10,7 @@ public class StringCtr
 {
 	private static final String HOST = "localhost";
 	private static final int PORT = 6379;
+	private static final long EXPIRE_TIME =60; //1 minute
 
     public static void main( String[] args )
     {
@@ -66,6 +67,8 @@ public class StringCtr
 		try (Jedis conn = jedisPool.getResource()) {
 			
 			  conn.set(ctrName, String.valueOf(initValue));
+			  //set the TTL to auto-cleanup
+			  conn.expire(ctrName, EXPIRE_TIME);
 			  String value = conn.get(ctrName);
 			  System.out.println( "Init Value :" + value );
 		}
