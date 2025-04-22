@@ -32,11 +32,20 @@ public class StreamConsumerThree {
 
 		try (Jedis conn = jedisPool.getResource()) {
 
-			// create a consumer group
-			List<StreamGroupInfo> groupInfo = conn.xinfoGroups(STREAM_NAME);
-			System.out.println(groupInfo);
+			List<StreamGroupInfo> groupInfo = null;
+			try {
+				groupInfo = conn.xinfoGroups(STREAM_NAME);
+			}catch(Exception e) {
+				// if the stream is not found jedis throws the exception. 
+				// could not find a better way to handle stream existence.
+				// hence as of now using try-catch.
+				groupInfo = null;
+			}
 			
-			if(groupInfo == null && groupInfo.isEmpty()) {
+			System.out.println(groupInfo);
+
+			// create a consumer group
+			if(groupInfo == null || groupInfo.isEmpty() || !containsCG(groupInfo)) {
 				String val = conn.xgroupCreate(STREAM_NAME, CONSUMER_GRP, new StreamEntryID("0-0"), true);
 				System.out.println("Group Created :" + val);
 
@@ -107,6 +116,11 @@ public class StreamConsumerThree {
 //			redisClient.shutdown();
 //		}
 
+	}
+	
+	private static boolean containsCG(List<StreamGroupInfo> groupInfo) {
+		return groupInfo.stream().filter(x -> x.getName().equals(CONSUMER_GRP)).count() > 0;
+		//return false;
 	}
 
 }
